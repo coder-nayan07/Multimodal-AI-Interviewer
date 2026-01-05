@@ -1,0 +1,9 @@
+langgraph
+langchain-groq
+langchain-community
+llama-parse
+pydantic
+python-dotenv
+instructor
+fastapi
+uvicorn
