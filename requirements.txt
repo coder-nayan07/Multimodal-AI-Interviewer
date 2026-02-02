@@ -6,5 +6,4 @@ pydantic
 python-dotenv
 instructor
 fastapi
-
 uvicorn

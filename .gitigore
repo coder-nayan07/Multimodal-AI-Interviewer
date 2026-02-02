@@ -1,0 +1,10 @@
+# Security
+.env
+.env.*
+*.pem
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
