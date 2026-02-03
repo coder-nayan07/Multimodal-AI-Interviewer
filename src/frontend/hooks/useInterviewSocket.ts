@@ -1,88 +1,101 @@
-import { useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTTS } from './useTTS'; // <--- 1. Import the Audio Hook
 
-// 1. Define the Feedback Type
-type Feedback = {
-  score: number;
-  feedback: string;
-};
+// --- CRITICAL FIX: Port 9001 ---
+// Since your SSH tunnel maps 9001 -> 8000, we must connect to 9001 here.
+const WS_URL = "ws://localhost:9001/api/v1/ws/interview/web_user_1";
 
-type Message = {
-  role: 'ai' | 'user';
-  content: string;
-};
-
-// Replace the default string below with your actual ngrok URL 
-// Example: "wss://cloacal-heike-graspable.ngrok-free.dev/api/v1/ws/interview/web_user_1"
-export const useInterviewSocket = (
-  url = "ws://localhost:9001/api/v1/ws/interview/web_user_1"
-) => {
-  const [messages, setMessages] = useState<Message[]>([]);
+export const useInterviewSocket = () => {
+  const { speak } = useTTS(); // Initialize the player
   
-  // 2. Add State for Feedback
-  const [lastFeedback, setLastFeedback] = useState<Feedback | null>(null);
-  
+  const [messages, setMessages] = useState<any[]>([]);
   const [isConnected, setIsConnected] = useState(false);
-  const socketRef = useRef<WebSocket | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [lastFeedback, setLastFeedback] = useState<any>(null);
 
-  const connect = useCallback(() => {
-    // Prevent multiple connections
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+  const ws = useRef<WebSocket | null>(null);
 
-    console.log("Connecting to WebSocket:", url);
-    const ws = new WebSocket(url);
-    socketRef.current = ws;
+  const connect = () => {
+    if (ws.current) return;
 
-    ws.onopen = () => {
-        console.log("WebSocket Connected");
-        setIsConnected(true);
+    console.log("🔌 Connecting to WebSocket at:", WS_URL);
+    const socket = new WebSocket(WS_URL);
+    ws.current = socket;
+
+    socket.onopen = () => {
+      console.log(" WebSocket Connected");
+      setIsConnected(true);
     };
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      
-      // Handle AI Responses
-      if (data.type === 'ai_response') {
-        setMessages((prev) => [...prev, { role: 'ai', content: data.payload }]);
+    socket.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+
+        // Case 1: AI Responds (Text + Audio)
+        if (data.type === 'ai_response') {
+          // Add text bubble
+          setMessages((prev) => [...prev, { role: 'ai', content: data.payload }]);
+          setIsProcessing(false);
+
+          // --- AUDIO TRIGGER ---
+          if (data.audio) {
+            console.log("🎤 Triggering Audio:", data.audio);
+            speak(data.audio); // <--- Plays the MP3
+          }
+        }
+        
+        // Case 2: Feedback/Score
+        else if (data.type === 'feedback') {
+          console.log(" Got Feedback:", data.payload);
+          setLastFeedback(data.payload);
+        }
+
+      } catch (err) {
+        console.error(" Error parsing websocket message:", err);
+      }
+    };
+
+    socket.onclose = () => {
+      console.log("⚠️ WebSocket Disconnected");
+      setIsConnected(false);
+      ws.current = null;
+    };
+
+    socket.onerror = (error) => {
+      console.error(" WebSocket Error:", error);
+    };
+  };
+
+  // Send Message Function
+  const sendMessage = (text: string, type: 'init' | 'answer' = 'answer') => {
+    if (ws.current && ws.current.readyState === WebSocket.OPEN) {
+      // Add user message to UI immediately
+      if (type === 'answer') {
+        setMessages((prev) => [...prev, { role: 'user', content: text }]);
       }
       
-      // 3. Handle Feedback Events
-      if (data.type === 'feedback') {
-        console.log("Got Feedback:", data.payload); // Debug log
-        setLastFeedback(data.payload);
-      }
-    };
-
-    ws.onclose = () => {
-        console.log("WebSocket Disconnected");
-        setIsConnected(false);
-    };
-    
-    ws.onerror = (error) => {
-        console.error("WebSocket Error:", error);
-    };
-    
-  }, [url]);
-
-  const sendMessage = (text: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      setMessages((prev) => [...prev, { role: 'user', content: text }]);
-      socketRef.current.send(JSON.stringify({ type: 'answer', payload: text }));
+      setIsProcessing(true);
       
-      // Clear old feedback when answering a new question
-      setLastFeedback(null); 
+      // Send to Backend
+      ws.current.send(JSON.stringify({ type, payload: text }));
     } else {
-        console.warn("Cannot send message: WebSocket is not open");
+      console.error(" Cannot send message: WebSocket is not open.");
     }
   };
 
-  const uploadResume = (fileName: string) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify({ type: 'init', payload: fileName }));
-    } else {
-        console.warn("Cannot upload resume: WebSocket is not open");
-    }
-  };
+  // Auto-connect on mount
+  useEffect(() => {
+    connect();
+    return () => {
+      if (ws.current) ws.current.close();
+    };
+  }, []);
 
-  // 4. Return lastFeedback so page.tsx can use it
-  return { messages, lastFeedback, isConnected, sendMessage, uploadResume, connect };
+  return { 
+    messages, 
+    sendMessage, 
+    isConnected, 
+    isProcessing, 
+    lastFeedback 
+  };
 };

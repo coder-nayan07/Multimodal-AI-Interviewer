@@ -1,51 +1,66 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export const useTTS = () => {
   const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // 1. Load Voices Asynchronously
+  // Cleanup: Stop audio if the user leaves the page
   useEffect(() => {
-    const loadVoices = () => {
-      const available = window.speechSynthesis.getVoices();
-      setVoices(available);
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+      }
+    };
+  }, []);
+
+  const speak = useCallback((audioUrl: string) => {
+    // 1. Sanity Check
+    if (!audioUrl) {
+      console.error(" useTTS: Received empty audio URL.");
+      return;
+    }
+
+    // 2. Stop any previous audio
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+
+    // 3. Construct the Full URL
+    // FIXED: Changed to 9001 to match your SSH tunnel (9001 -> Server 8000)
+    const backendUrl = "http://localhost:9001"; 
+    
+    // If the URL is relative (starts with /), add the backend domain
+    const fullUrl = audioUrl.startsWith("http") 
+      ? audioUrl 
+      : `${backendUrl}${audioUrl}`;
+    
+    console.log("🔊 Playing Audio from:", fullUrl);
+
+    // 4. Play the MP3
+    const audio = new Audio(fullUrl);
+    audioRef.current = audio;
+    setIsSpeaking(true);
+
+    audio.play()
+      .then(() => console.log("Audio started"))
+      .catch((err) => console.error(" Audio Playback Failed:", err));
+
+    audio.onended = () => setIsSpeaking(false);
+    
+    audio.onerror = (e) => {
+        console.error(" Audio Load Error. Check your Port/Network:", e);
+        setIsSpeaking(false);
     };
 
-    loadVoices();
-    
-    if (window.speechSynthesis.onvoiceschanged !== undefined) {
-      window.speechSynthesis.onvoiceschanged = loadVoices;
+  }, []);
+
+  const stop = useCallback(() => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsSpeaking(false);
     }
   }, []);
 
-  const speak = useCallback((text: string) => {
-    if (!window.speechSynthesis) return;
-
-    window.speechSynthesis.cancel();
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // 2. Select a Voice
-    const preferredVoice = voices.find(
-      v => v.name.includes("Google US English") || v.name.includes("Zira")
-    );
-    
-    if (preferredVoice) utterance.voice = preferredVoice;
-    
-    utterance.rate = 1.0;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-
-    utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    
-    // FIXED: Removed console.error to satisfy linter
-    utterance.onerror = () => {
-      setIsSpeaking(false);
-    };
-
-    window.speechSynthesis.speak(utterance);
-  }, [voices]);
-
-  return { speak, isSpeaking };
+  return { speak, stop, isSpeaking };
 };
