@@ -1,21 +1,27 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 export const useSpeech = () => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
+  
+  // Store the recognition instance so we can stop it manually
+  const recognitionRef = useRef<any>(null);
 
   const startListening = useCallback(() => {
+    if (typeof window === 'undefined') return;
+
     if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-      alert("Browser does not support speech recognition. Try Chrome or Edge.");
+      alert("Browser does not support speech recognition. Try Chrome.");
       return;
     }
 
-    // @ts-ignore - Typescript doesn't know about webkitSpeechRecognition by default
+    // @ts-ignore
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SpeechRecognition();
 
-    recognition.continuous = false; // Stop after one sentence/paragraph
-    recognition.interimResults = false; // Only return final results
+    // CRITICAL FIX: Keep listening even if user pauses
+    recognition.continuous = true; 
+    recognition.interimResults = true; // Show words as you speak
     recognition.lang = 'en-US';
 
     recognition.onstart = () => {
@@ -23,21 +29,37 @@ export const useSpeech = () => {
     };
 
     recognition.onresult = (event: any) => {
-      const text = event.results[0][0].transcript;
-      setTranscript(text);
+      let finalTranscript = "";
+      // Loop through results to handle continuous stream
+      for (let i = event.resultIndex; i < event.results.length; ++i) {
+        if (event.results[i].isFinal) {
+          finalTranscript += event.results[i][0].transcript;
+        }
+      }
+      if (finalTranscript) {
+        setTranscript((prev) => prev + " " + finalTranscript);
+      }
     };
 
     recognition.onerror = (event: any) => {
-      console.error("Speech Error:", event.error);
-      setIsListening(false);
+      console.log("Speech Error:", event.error); // Safe to log for debugging
+      if (event.error === 'not-allowed') setIsListening(false);
     };
 
     recognition.onend = () => {
       setIsListening(false);
     };
 
+    recognitionRef.current = recognition;
     recognition.start();
   }, []);
 
-  return { isListening, transcript, startListening, setTranscript };
+  const stopListening = useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    }
+  }, []);
+
+  return { isListening, transcript, startListening, stopListening, setTranscript };
 };

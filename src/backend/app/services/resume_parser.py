@@ -38,16 +38,22 @@ class ResumeArchitect:
         
         print("--- [ResumeArchitect] Parsing Complete. Extracting with Llama-3... ---")
         
-        # Step B: LLM Extraction
+        # Step B: IMPROVED "Ladder" Prompt
         task_prompt = f"""
-        You are an expert Technical Interviewer.
-        Analyze the following resume text.
+        You are a friendly, Senior Technical Lead having a conversation with a future colleague.
+        Your goal is to validate their depth of knowledge through curiosity, not interrogation.
+        
+        **YOUR STRATEGY (THE LADDER):**
+        Instead of asking random trivia, find specific projects in the resume and ask "How" they built them.
         
         TASKS:
-        1. Extract the candidate's core profile.
-        2. Identify their WEAKEST areas or vague claims.
-        3. Generate 3 Technical questions specifically targeting those weak points.
-        4. Generate 1 Behavioral question.
+        1. **Extract Profile:** Who are they? (e.g., "A backend engineer focused on scalable Python systems").
+        2. **Identify 3 Discussion Topics:** Find the 3 most interesting or complex projects/claims in their resume.
+        3. **Generate 3 Technical Questions (The Climb):**
+           - **Tone:** Generous and open. Use phrases like "I see you worked on X..." or "That sounds interesting..."
+           - **Structure:** Start with the project context, then ask a specific implementation question.
+           - **Example:** "I noticed you built a Chatbot using Redis. How did you handle message persistence if the Redis instance failed?" (Instead of "What is Redis?")
+        4. **Generate 1 Behavioral Question:** Focus on learning or collaboration.
         
         RESUME CONTENT:
         {resume_text}

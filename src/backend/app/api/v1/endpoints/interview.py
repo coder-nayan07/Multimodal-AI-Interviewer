@@ -23,7 +23,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             message = json.loads(data)
             
             # --- DEBUG LOG ---
-            print(f"\n🔍 START TURN | Current Index: {current_state.get('current_question_index')}")
+            print(f"\nSTART TURN | Current Index: {current_state.get('current_question_index')}")
 
             # CASE 1: START INTERVIEW
             if message["type"] == "init":
@@ -80,7 +80,7 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
                                 })
 
             # --- DEBUG LOG ---
-            print(f"🏁 END TURN | New Index: {current_state.get('current_question_index')}")
+            print(f" END TURN | New Index: {current_state.get('current_question_index')}")
 
     except WebSocketDisconnect:
         print(f"--- Client {client_id} Disconnected ---")
