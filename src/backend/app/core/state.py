@@ -1,7 +1,7 @@
-from typing import List, Optional, Literal, TypedDict
-from pydantic import BaseModel, Field
+from typing import List, Optional, Literal, TypedDict, Union
+from pydantic import BaseModel, Field, field_validator
 
-# --- 1. Shared Data Models ---
+# --- Shared Data Models ---
 
 class Question(BaseModel):
     id: str = Field(..., description="Unique ID for frontend tracking")
@@ -21,13 +21,29 @@ class InterviewPlan(BaseModel):
     candidate: CandidateProfile
     question_bank: List[Question]
 
-# --- NEW: Evaluation Model (The missing piece) ---
+# --- NEW: Evaluation Model (Robust Fix) ---
 class AnswerEvaluation(BaseModel):
-    score: int = Field(..., description="Score between 0-10 based on accuracy and depth")
-    feedback: str = Field(..., description="Short feedback for the candidate (e.g. 'Good mention of mutex locks, but missed semaphores')")
-    is_relevant: bool = Field(..., description="True if the answer actually addresses the question")
+    score: Union[int, str] = Field(..., description="Score between 0-10")
+    feedback: str = Field(..., description="Short feedback for the candidate")
+    is_relevant: Union[bool, str] = Field(..., description="True if the answer actually addresses the question")
 
-# --- 2. The Graph State (Memory) ---
+    @field_validator('score')
+    @classmethod
+    def convert_score(cls, v):
+        if isinstance(v, str):
+            # Handle cases where LLM outputs "8/10" or "Score: 8"
+            clean_v = ''.join(filter(str.isdigit, v))
+            return int(clean_v) if clean_v else 0
+        return v
+
+    @field_validator('is_relevant')
+    @classmethod
+    def convert_bool(cls, v):
+        if isinstance(v, str):
+            return v.lower() == 'true'
+        return v
+
+# --- The Graph State (Memory) ---
 
 class InterviewState(TypedDict):
     """
@@ -40,13 +56,12 @@ class InterviewState(TypedDict):
     question_bank: List[Question]
     current_question_index: int
     
-    # Conversation History (Chat Log)
+    # Conversation History
     messages: List[dict] 
     
-    # --- NEW: Track Scores ---
-    # This stores the history of every grade given by the LLM
+    # Track Scores
     evaluations: List[AnswerEvaluation] 
     
-    # Optional legacy fields (can keep or remove)
+    # Optional legacy fields
     current_answer_feedback: Optional[str]
     interview_score: float
