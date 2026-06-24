@@ -24,4 +24,4 @@ profile = profiler.generate(
     jd,
 )
 
-print(profile.model_dump())
+print(profile.model_dump()['strengths'])

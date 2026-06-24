@@ -8,6 +8,8 @@ from src.models.schemas import (
     JobDescriptionDocument,
 )
 
+
+
 class CandidateProfiler:
 
     def __init__(self):
@@ -28,10 +30,10 @@ class CandidateProfiler:
         ) -> CandidateProfile:
 
         chain = self.prompt | self.structured_llm
-
+        resume_context = resume.to_llm_context()
         profile = chain.invoke(
             {
-                "resume_text": resume.cleaned_text,
+                "resume_text": resume_context,
                 "jd_text": jd.cleaned_text,
             }
         )

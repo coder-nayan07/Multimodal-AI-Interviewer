@@ -6,12 +6,28 @@ class ResumeDocument(BaseModel):
     file_name: str
     raw_text: str
     cleaned_text: str
-    sections: Dict[str, str]
+    sections: dict[str, str]
+
+    def to_llm_context(self) -> str:
+
+        chunks = []
+
+        for section, content in self.sections.items():
+
+            chunks.append(
+                f"{section.upper()}:\n{content}"
+            )
+
+        return "\n\n".join(chunks)
+
+
 
 class JobDescriptionDocument(BaseModel):
     file_name: str
     raw_text: str
     cleaned_text: str
+
+
 
 class CandidateProfile(BaseModel):
     matched_skills: list[str]
@@ -27,3 +43,18 @@ class CandidateProfile(BaseModel):
     project_discussion_points: list[str]
 
     overall_summary: str
+
+
+class InterviewPlan(BaseModel):
+
+    target_topics: list[str]
+
+    topic_weights: dict[str, int]
+
+    target_question_count: int
+
+    estimated_duration_minutes: int
+
+    focus_areas: list[str]
+
+    probing_areas: list[str]
