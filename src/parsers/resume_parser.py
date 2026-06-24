@@ -95,9 +95,8 @@ class ResumeParser:
         return "\n".join(pages)
 
     def _clean_text(self, text: str) -> str:
-        """
-        Basic text normalization.
-        """
+
+        text = re.sub(r"[^\x00-\x7F]+", " ", text)
 
         text = text.replace("\t", " ")
 
@@ -106,7 +105,6 @@ class ResumeParser:
         text = re.sub(r"\n{3,}", "\n\n", text)
 
         lines = [line.strip() for line in text.splitlines()]
-
         lines = [line for line in lines if line]
 
         return "\n".join(lines)
