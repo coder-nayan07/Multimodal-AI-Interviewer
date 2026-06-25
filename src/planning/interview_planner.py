@@ -1,40 +1,118 @@
-from langchain_core.prompts import ChatPromptTemplate
-
-from src.llm.llm_client import LLMClient
-from src.llm.prompts import INTERVIEW_PLANNING_PROMPT
 from src.models.schemas import (
-    CandidateProfile,
     InterviewPlan,
+    InterviewTopic,
+    PlanningContext,
+    ResumeDocument,
+    JobDescriptionDocument,
 )
 
+
 class InterviewPlanner:
+    """
+    Converts a PlanningContext into an ordered InterviewPlan.
+
+    This class contains no LLM calls and no business
+    intelligence beyond deterministic ordering.
+    """
 
     def generate(
         self,
-        profile: CandidateProfile
+        resume: ResumeDocument,
+        jd: JobDescriptionDocument,
+        planning_context: PlanningContext,
     ) -> InterviewPlan:
 
+        topics: list[InterviewTopic] = []
+
+        visited: set[str] = set()
+
+        # ------------------------------------------
+        # Resume Highlights (Highest Priority)
+        # ------------------------------------------
+
+        for highlight in planning_context.resume_highlights:
+
+            key = highlight.lower()
+
+            if key in visited:
+                continue
+
+            topics.append(
+                InterviewTopic(
+                    topic=highlight,
+                    source="resume",
+                    objective=(
+                        f"Discuss the candidate's experience related to "
+                        f"'{highlight}' and understand the technical "
+                        "decisions, challenges and outcomes."
+                    ),
+                    evidence=[
+                        f"Resume Highlight: {highlight}"
+                    ],
+                )
+            )
+
+            visited.add(key)
+
+        # ------------------------------------------
+        # Requirements To Verify
+        # ------------------------------------------
+
+        for requirement in planning_context.requirements_to_verify:
+
+            key = requirement.lower()
+
+            if key in visited:
+                continue
+
+            topics.append(
+                InterviewTopic(
+                    topic=requirement,
+                    source="job_description",
+                    objective=(
+                        f"Verify the candidate's understanding and practical "
+                        f"experience with '{requirement}'."
+                    ),
+                    evidence=[
+                        f"JD Requirement: {requirement}"
+                    ],
+                )
+            )
+
+            visited.add(key)
+
+        # ------------------------------------------
+        # Remaining JD Priorities
+        # ------------------------------------------
+
+        for item in planning_context.jd_priorities:
+
+            key = item.lower()
+
+            if key in visited:
+                continue
+
+            topics.append(
+                InterviewTopic(
+                    topic=item,
+                    source="job_description",
+                    objective=(
+                        f"Assess the candidate's familiarity with '{item}' "
+                        "if time permits."
+                    ),
+                    evidence=[
+                        f"JD Priority: {item}"
+                    ],
+                )
+            )
+
+            visited.add(key)
+
         return InterviewPlan(
-            target_topics=profile.suggested_interview_topics[:5],
-
-            focus_areas=profile.strengths[:3],
-
-            probing_areas=profile.missing_skills[:3],
-
-            question_constraints=[
-                "Only ask questions related to resume, JD, or interview plan",
-                "Prefer project-specific questions",
-                "Probe missing skills from JD",
-                "Avoid unrelated technologies",
-            ],
-
-            target_question_count=10,
-
-            estimated_duration_minutes=25,
-
+            topics=topics,
             interview_strategy=(
-                "Start with projects, "
-                "move to strengths, "
-                "then probe missing skills."
+                "Start with the candidate's strongest resume highlights, "
+                "transition into job-specific verification topics, "
+                "and conclude with any remaining important requirements."
             ),
         )

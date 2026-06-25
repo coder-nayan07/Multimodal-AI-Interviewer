@@ -1,11 +1,17 @@
-import sys
 import os
+import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(
+    os.path.abspath(
+        os.path.join(
+            os.path.dirname(__file__),
+            "..",
+        )
+    )
+)
 
 from src.parsers.resume_parser import ResumeParser
 from src.parsers.jd_parser import JobDescriptionParser
-
 from src.profiling.candidate_profiler import CandidateProfiler
 from src.planning.interview_planner import InterviewPlanner
 
@@ -18,13 +24,32 @@ jd = JobDescriptionParser().parse(
     "data/JD.txt"
 )
 
-profile = CandidateProfiler().generate(
+planning_context = CandidateProfiler().generate(
     resume,
-    jd
+    jd,
 )
 
-plan = InterviewPlanner().generate(
-    profile
+planner = InterviewPlanner()
+
+plan = planner.generate(
+    resume,
+    jd,
+    planning_context,
 )
 
-print(plan.model_dump())
+print("=" * 100)
+print("INTERVIEW PLAN")
+print("=" * 100)
+
+for idx, topic in enumerate(plan.topics, start=1):
+
+    print(f"\nTopic {idx}")
+
+    print(f"Title      : {topic.topic}")
+    print(f"Source     : {topic.source}")
+    print(f"Objective  : {topic.objective}")
+
+print("\nStrategy")
+print(plan.interview_strategy)
+
+print("\nTotal Topics:", len(plan.topics))

@@ -96,69 +96,60 @@ class PlanningContext(BaseModel):
         )
     )
 
-
 class InterviewTopic(BaseModel):
-    """Represents one interview topic."""
-
 
     topic: str = Field(
-        description="Name of the interview topic."
-    )
-
-    source: Literal["resume", "job_description", "both"] = Field(
         description=(
-            "Origin of the topic. "
-            "'resume' means it comes from resume evidence, "
-            "'job_description' means it comes from the JD, "
-            "'both' means it is supported by both."
+            "Definition:\n"
+            "A single interview topic.\n\n"
+
+            "Requirements:\n"
+            "- Must originate from the Resume, Job Description or both.\n"
+            "- Must be specific.\n"
+            "- Must represent one interview discussion area.\n\n"
+
+            "Do NOT:\n"
+            "- Combine unrelated technologies.\n"
+            "- Invent new topics."
         )
     )
 
-    priority: Literal["high", "medium", "low"] = Field(
+    objective: str = Field(
         description=(
-            "Importance of this topic in the interview."
+            "Definition:\n"
+            "Describe exactly what the interviewer wants to verify "
+            "while discussing this topic.\n\n"
+
+            "Example:\n"
+            "Evaluate the candidate's understanding of architectural "
+            "decisions made during the project."
         )
     )
 
-    rationale: str = Field(
-        description=(
-            "Brief explanation describing why this topic should be discussed."
-        )
+    source: Literal["resume", "job_description"] = Field(
+        description="""
+        Source of this interview topic.
+
+        Output EXACTLY one of:
+        - resume
+        - job_description
+        - both
+        """
     )
 
     evidence: list[str] = Field(
         description=(
-            "Concrete evidence supporting this topic. "
-            "Every evidence item must come directly from the Resume or Job Description."
+            "Concrete resume or JD evidence supporting "
+            "this topic."
         )
     )
 
 
 class InterviewPlan(BaseModel):
-    """Represents the complete interview plan."""
-
 
     topics: list[InterviewTopic] = Field(
         description=(
             "Ordered list of interview topics that should be discussed."
-        )
-    )
-
-    question_constraints: list[str] = Field(
-        description=(
-            "Rules that the Question Generator must always follow while generating interview questions."
-        )
-    )
-
-    target_question_count: int = Field(
-        description=(
-            "Approximate number of questions to ask during the interview."
-        )
-    )
-
-    estimated_duration_minutes: int = Field(
-        description=(
-            "Estimated duration of the interview in minutes."
         )
     )
 

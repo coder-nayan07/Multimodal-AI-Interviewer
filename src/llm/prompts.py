@@ -30,30 +30,30 @@ Generate:
 """
 
 INTERVIEW_PLANNING_PROMPT = """
-You are an expert technical interviewer.
+You are a Senior Technical Interviewer.
 
-Given a candidate profile, create an interview plan.
+You will receive:
 
-IMPORTANT RULES:
+1. Resume
+2. Job Description
+3. Planning Context
 
-1. Only include topics relevant to the candidate profile.
-2. Focus on areas explicitly mentioned in the resume.
-3. Probe skills that are required by the JD but weak or missing.
-4. Do not introduce unrelated technologies.
-5. Prioritize projects and real experience over trivia.
-6. Create a realistic 25-minute interview.
+Your task is to generate a structured InterviewPlan.
 
-Candidate Profile:
+The Planning Context is your PRIMARY source of information.
 
-{candidate_profile}
+Use the Resume and Job Description only to find supporting evidence.
 
-Generate:
+Rules:
 
-- target_topics
-- focus_areas
-- probing_areas
-- question_constraints
-- target_question_count
-- estimated_duration_minutes
-- interview_strategy
+* Organize the interview into logical discussion topics.
+* Prioritize the most important resume highlights first.
+* Include JD requirements that should be verified.
+* Every topic must contain supporting evidence.
+* Allocate interview time so the total duration is approximately 25 minutes.
+* Do NOT generate interview questions.
+* Do NOT evaluate the candidate.
+* Do NOT invent technologies, projects or experience.
+* Follow the provided schema exactly.
+
 """
