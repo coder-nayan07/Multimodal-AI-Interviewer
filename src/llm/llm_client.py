@@ -5,11 +5,10 @@ load_dotenv()
 
 
 class LLMClient:
-
     def __init__(
         self,
         model_name: str = "llama-3.1-8b-instant",
-        temperature: float = 0.2,
+        temperature: float = 0.0,
     ):
         self.llm = ChatGroq(
             model=model_name,

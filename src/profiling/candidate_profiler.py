@@ -3,20 +3,20 @@ from langchain_core.prompts import ChatPromptTemplate
 from src.llm.llm_client import LLMClient
 from src.llm.prompts import PROFILE_GENERATION_PROMPT
 from src.models.schemas import (
-    CandidateProfile,
+    PlanningContext,
     ResumeDocument,
     JobDescriptionDocument,
 )
-
-
 
 class CandidateProfiler:
 
     def __init__(self):
         self.llm = LLMClient().get_llm()
 
-        self.structured_llm = self.llm.with_structured_output(
-            CandidateProfile
+        self.structured_llm = (
+            self.llm.with_structured_output(
+                PlanningContext
+            )
         )
 
         self.prompt = ChatPromptTemplate.from_template(
@@ -24,18 +24,18 @@ class CandidateProfiler:
         )
 
     def generate(
-            self,
-            resume: ResumeDocument,
-            jd: JobDescriptionDocument,
-        ) -> CandidateProfile:
+        self,
+        resume: ResumeDocument,
+        jd: JobDescriptionDocument,
+    ) -> PlanningContext:
 
         chain = self.prompt | self.structured_llm
-        resume_context = resume.to_llm_context()
-        profile = chain.invoke(
+
+        summary = chain.invoke(
             {
-                "resume_text": resume_context,
-                "jd_text": jd.cleaned_text,
+                "resume_text": resume.to_llm_context(),
+                "jd_text": jd.to_llm_context(),
             }
         )
 
-        return profile
+        return summary
