@@ -201,3 +201,33 @@ class InterviewQuestion(BaseModel):
             "These will be reused by the evaluation module."
         )
     )
+
+class InterviewTurn(BaseModel):
+    """
+    One complete interaction between the interviewer and candidate.
+    """
+
+    topic: InterviewTopic
+
+    question: InterviewQuestion
+
+    candidate_answer: str = Field(
+        default="",
+        description="Candidate's answer to the interview question."
+    )
+
+    
+class InterviewSession(BaseModel):
+    """
+    Represents the complete state of an interview.
+    """
+
+    interview_plan: InterviewPlan
+
+    current_topic_index: int = 0
+
+    turns: list[InterviewTurn] = Field(
+        default_factory=list
+    )
+
+    completed: bool = False
