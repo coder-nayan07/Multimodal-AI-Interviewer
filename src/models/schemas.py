@@ -1,10 +1,9 @@
 from typing import Literal
-
+import re
 from pydantic import BaseModel, Field
 
 class ResumeDocument(BaseModel):
     """Represents a parsed resume."""
-
 
     file_name: str = Field(
         description="Name of the uploaded resume file."
@@ -37,6 +36,55 @@ class ResumeDocument(BaseModel):
 
         return "\n\n".join(chunks)
 
+    @staticmethod
+    def _normalize(text: str) -> str:
+        """
+        Lowercase text and remove punctuation.
+        """
+        text = text.lower()
+        text = re.sub(r"[^a-z0-9\s]", " ", text)
+        text = re.sub(r"\s+", " ", text)
+        return text.strip()
+
+    def find_relevant_context(
+        self,
+        topic: str,
+    ) -> str:
+        """
+        Finds the paragraph most relevant to the supplied topic using
+        keyword overlap instead of exact string matching.
+        """
+
+        topic_tokens = set(
+            self._normalize(topic).split()
+        )
+
+        best_match = ""
+        best_score = 0
+
+        for section_text in self.sections.values():
+
+            paragraphs = re.split(
+                r"\n\s*\n",
+                section_text,
+            )
+
+            for paragraph in paragraphs:
+
+                paragraph_tokens = set(
+                    self._normalize(paragraph).split()
+                )
+
+                score = len(
+                    topic_tokens.intersection(paragraph_tokens)
+                )
+
+                if score > best_score:
+
+                    best_score = score
+                    best_match = paragraph.strip()
+
+        return best_match
 
 class JobDescriptionDocument(BaseModel):
     """Represents a parsed Job Description."""
@@ -99,48 +147,25 @@ class PlanningContext(BaseModel):
 class InterviewTopic(BaseModel):
 
     topic: str = Field(
-        description=(
-            "Definition:\n"
-            "A single interview topic.\n\n"
-
-            "Requirements:\n"
-            "- Must originate from the Resume, Job Description or both.\n"
-            "- Must be specific.\n"
-            "- Must represent one interview discussion area.\n\n"
-
-            "Do NOT:\n"
-            "- Combine unrelated technologies.\n"
-            "- Invent new topics."
-        )
+        description="Title of the interview discussion topic."
     )
 
     objective: str = Field(
-        description=(
-            "Definition:\n"
-            "Describe exactly what the interviewer wants to verify "
-            "while discussing this topic.\n\n"
-
-            "Example:\n"
-            "Evaluate the candidate's understanding of architectural "
-            "decisions made during the project."
-        )
+        description="What the interviewer wants to understand."
     )
 
-    source: Literal["resume", "job_description"] = Field(
-        description="""
-        Source of this interview topic.
-
-        Output EXACTLY one of:
-        - resume
-        - job_description
-        - both
-        """
+    source: Literal[
+        "resume",
+        "job_description"
+    ] = Field(
+        description="Source of this interview topic."
     )
 
-    evidence: list[str] = Field(
+    supporting_context: str = Field(
         description=(
-            "Concrete resume or JD evidence supporting "
-            "this topic."
+            "Relevant excerpt from the Resume or Job Description "
+            "that provides enough technical context for generating "
+            "high-quality interview questions."
         )
     )
 
@@ -157,5 +182,22 @@ class InterviewPlan(BaseModel):
         description=(
             "Overall strategy describing how the interview should progress, "
             "including the order of topics and areas that require deeper probing."
+        )
+    )
+
+class InterviewQuestion(BaseModel):
+
+    question: str = Field(
+        description="Exactly one open-ended interview question."
+    )
+
+    intent: str = Field(
+        description="What this question is intended to assess."
+    )
+
+    answer_checkpoints: list[str] = Field(
+        description=(
+            "Important concepts that a good answer should include. "
+            "These will be reused by the evaluation module."
         )
     )

@@ -12,8 +12,10 @@ sys.path.append(
 
 from src.parsers.resume_parser import ResumeParser
 from src.parsers.jd_parser import JobDescriptionParser
+
 from src.profiling.candidate_profiler import CandidateProfiler
 from src.planning.interview_planner import InterviewPlanner
+from src.questioning.question_generator import QuestionGenerator
 
 
 resume = ResumeParser().parse(
@@ -29,28 +31,30 @@ planning_context = CandidateProfiler().generate(
     jd,
 )
 
-planner = InterviewPlanner()
-
-plan = planner.generate(
+interview_plan = InterviewPlanner().generate(
     resume,
     jd,
     planning_context,
 )
 
-print("=" * 100)
-print("INTERVIEW PLAN")
-print("=" * 100)
+generator = QuestionGenerator()
 
-for idx, topic in enumerate(plan.topics, start=1):
+topic = interview_plan.topics[0]
 
-    print(f"\nTopic {idx}")
+question = generator.generate(
+    resume,
+    jd,
+    topic,
+)
 
-    print(f"Title      : {topic.topic}")
-    print(f"Source     : {topic.source}")
-    print(f"Objective  : {topic.objective}")
-    print(f"supporting : {topic.supporting_context}")
+print("=" * 80)
+print("CURRENT TOPIC")
+print("=" * 80)
+print(topic.model_dump())
 
-print("\nStrategy")
-print(plan.interview_strategy)
+print()
 
-print("\nTotal Topics:", len(plan.topics))
+print("=" * 80)
+print("GENERATED QUESTION")
+print("=" * 80)
+print(question.model_dump())

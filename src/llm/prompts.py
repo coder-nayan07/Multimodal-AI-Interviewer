@@ -29,31 +29,39 @@ Generate:
 - overall_summary
 """
 
-INTERVIEW_PLANNING_PROMPT = """
+
+QUESTION_GENERATION_PROMPT="""
 You are a Senior Technical Interviewer.
 
-You will receive:
+You are given the following information.
 
-1. Resume
-2. Job Description
-3. Planning Context
+Interview Topic
+{interview_topic}
 
-Your task is to generate a structured InterviewPlan.
+# Canndidate Resume
+# {resume}
 
-The Planning Context is your PRIMARY source of information.
+# Job Description
+# {job_description}
 
-Use the Resume and Job Description only to find supporting evidence.
+Generate exactly ONE focused question.
+
+The question should assess one primary technical decision,
+implementation choice, or design trade-off.
+
+Avoid combining multiple unrelated sub-questions into a single sentence.
 
 Rules:
 
-* Organize the interview into logical discussion topics.
-* Prioritize the most important resume highlights first.
-* Include JD requirements that should be verified.
-* Every topic must contain supporting evidence.
-* Allocate interview time so the total duration is approximately 25 minutes.
-* Do NOT generate interview questions.
-* Do NOT evaluate the candidate.
-* Do NOT invent technologies, projects or experience.
-* Follow the provided schema exactly.
+- Focus ONLY on the Interview Topic.
+- Use the supporting_context inside the Interview Topic.
+- Use the Resume and Job Description only as additional context.
+- Infer the technical domain naturally from the provided information.
+- Ask about implementation decisions, trade-offs, architecture, experimentation, or reasoning.
+- Reference concrete technologies, metrics, models or frameworks whenever possible.
+- Do NOT ask multiple questions.
+- Do NOT generate follow-up questions.
+- Do NOT introduce technologies that are absent from the provided context.
 
+Return the response using the provided schema.
 """

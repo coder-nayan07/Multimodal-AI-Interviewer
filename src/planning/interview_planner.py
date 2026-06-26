@@ -14,6 +14,7 @@ class InterviewPlanner:
     This class contains no LLM calls and no business
     intelligence beyond deterministic ordering.
     """
+            
 
     def generate(
         self,
@@ -46,9 +47,9 @@ class InterviewPlanner:
                         f"'{highlight}' and understand the technical "
                         "decisions, challenges and outcomes."
                     ),
-                    evidence=[
-                        f"Resume Highlight: {highlight}"
-                    ],
+                    supporting_context=resume.find_relevant_context(
+                        highlight
+                    ),
                 )
             )
 
@@ -73,9 +74,10 @@ class InterviewPlanner:
                         f"Verify the candidate's understanding and practical "
                         f"experience with '{requirement}'."
                     ),
-                    evidence=[
-                        f"JD Requirement: {requirement}"
-                    ],
+                    supporting_context=(
+                        f"This topic originates from the Job Description.\n"
+                        f"Requirement: {requirement}"
+                    )
                 )
             )
 
@@ -100,9 +102,10 @@ class InterviewPlanner:
                         f"Assess the candidate's familiarity with '{item}' "
                         "if time permits."
                     ),
-                    evidence=[
-                        f"JD Priority: {item}"
-                    ],
+                    supporting_context=(
+                        f"This topic originates from the Job Description.\n"
+                        f"Requirement: {requirement}"
+                    )
                 )
             )
 
