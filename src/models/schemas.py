@@ -231,3 +231,21 @@ class InterviewSession(BaseModel):
     )
 
     completed: bool = False
+
+class FollowUpQuestion(BaseModel):
+
+    question: str = Field(
+        description="Exactly one follow-up interview question."
+    )
+
+    assessment_goal: str = Field(
+        description=(
+            "What this follow-up question is intended to assess."
+        )
+    )
+
+    answer_checkpoints: list[str] = Field(
+        description=(
+            "Important concepts expected in a strong answer."
+        )
+    )

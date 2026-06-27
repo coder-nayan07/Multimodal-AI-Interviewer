@@ -15,6 +15,36 @@ class InterviewEngine:
     no LLM calls.
     """
 
+    def topic_history(
+        self,
+        session: InterviewSession,
+    ) -> str:
+        """
+        Returns the conversation history for the
+        current interview topic.
+        """
+
+        current_topic = self.current_topic(session)
+
+        history = []
+
+        for turn in session.turns:
+
+            if turn.topic.topic != current_topic.topic:
+                continue
+
+            history.append(
+                f"Question:\n{turn.question.question}"
+            )
+
+            if turn.candidate_answer:
+
+                history.append(
+                    f"Candidate:\n{turn.candidate_answer}"
+                )
+
+        return "\n\n".join(history)
+
     def start(
         self,
         interview_plan: InterviewPlan,
