@@ -216,6 +216,13 @@ class InterviewTurn(BaseModel):
         description="Candidate's answer to the interview question."
     )
 
+    turn_type: Literal[
+        "initial",
+        "follow_up", 
+    ] = Field(
+        default='initial',
+        description="This tells whether it is first question of interview or the followup question"
+    )
     
 class InterviewSession(BaseModel):
     """
@@ -247,5 +254,50 @@ class FollowUpQuestion(BaseModel):
     answer_checkpoints: list[str] = Field(
         description=(
             "Important concepts expected in a strong answer."
+        )
+    )
+class AnswerEvaluation(BaseModel):
+    """
+    Evaluation of one candidate response.
+    """
+
+    answered_question: bool = Field(
+        description="Whether the candidate actually answered the interview question."
+    )
+
+    demonstrated_understanding: Literal[
+        "excellent",
+        "good",
+        "partial",
+        "poor",
+    ] = Field(
+        description="Overall technical understanding demonstrated."
+    )
+
+    strengths: list[str] = Field(
+        description="Technical strengths demonstrated in the answer."
+    )
+
+    missing_points: list[str] = Field(
+        description="Important concepts expected but not sufficiently discussed."
+    )
+
+    evaluation_summary: str = Field(
+        description="Short feedback explaining the evaluation."
+    )
+
+    next_action: Literal[
+        "follow_up",
+        "next_topic",
+        "end_interview",
+    ] = Field(
+        description=(
+            "Recommended next action for the interview engine."
+        )
+    )
+
+    follow_up_focus: str = Field(
+        description=(
+            "If next_action is follow_up, specify exactly what should be explored."
         )
     )
