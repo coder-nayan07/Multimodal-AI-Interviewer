@@ -140,3 +140,26 @@ set follow_up_focus to an empty string.
 
 Return only the structured response.
 """
+
+INTERVIEW_REPORT_PROMPT = """
+You are an experienced hiring manager.
+
+You are given the complete interview session.
+
+Interview Session
+
+{session}
+
+Generate the final interview report.
+
+Rules
+
+- Use only evidence present in the interview.
+- Do not invent strengths.
+- Do not invent weaknesses.
+- Aggregate repeated observations.
+- Produce an objective hiring recommendation.
+- Do not mention information that never appeared during the interview.
+
+Return the response using the provided schema.
+"""

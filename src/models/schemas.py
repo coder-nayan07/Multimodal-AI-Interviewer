@@ -186,76 +186,40 @@ class InterviewPlan(BaseModel):
     )
 
 class InterviewQuestion(BaseModel):
+    """
+    Represents a single interview question, either an initial
+    question or a follow-up question.
+    """
 
     question: str = Field(
         description="Exactly one open-ended interview question."
     )
 
-    intent: str = Field(
-        description="What this question is intended to assess."
+    assessment_goal: str = Field(
+        description=(
+            "What this question is intended to assess."
+        )
     )
 
     answer_checkpoints: list[str] = Field(
         description=(
             "Important concepts that a good answer should include. "
-            "These will be reused by the evaluation module."
+            "These are later used during answer evaluation."
         )
     )
 
-class InterviewTurn(BaseModel):
-    """
-    One complete interaction between the interviewer and candidate.
-    """
-
-    topic: InterviewTopic
-
-    question: InterviewQuestion
-
-    candidate_answer: str = Field(
-        default="",
-        description="Candidate's answer to the interview question."
-    )
-
-    turn_type: Literal[
+    question_type: Literal[
         "initial",
-        "follow_up", 
+        "follow_up",
     ] = Field(
-        default='initial',
-        description="This tells whether it is first question of interview or the followup question"
-    )
-    
-class InterviewSession(BaseModel):
-    """
-    Represents the complete state of an interview.
-    """
-
-    interview_plan: InterviewPlan
-
-    current_topic_index: int = 0
-
-    turns: list[InterviewTurn] = Field(
-        default_factory=list
-    )
-
-    completed: bool = False
-
-class FollowUpQuestion(BaseModel):
-
-    question: str = Field(
-        description="Exactly one follow-up interview question."
-    )
-
-    assessment_goal: str = Field(
         description=(
-            "What this follow-up question is intended to assess."
+            "Indicates whether this is the first question "
+            "for a topic or a follow-up question."
         )
     )
 
-    answer_checkpoints: list[str] = Field(
-        description=(
-            "Important concepts expected in a strong answer."
-        )
-    )
+
+   
 class AnswerEvaluation(BaseModel):
     """
     Evaluation of one candidate response.
@@ -299,5 +263,117 @@ class AnswerEvaluation(BaseModel):
     follow_up_focus: str = Field(
         description=(
             "If next_action is follow_up, specify exactly what should be explored."
+        )
+    )
+
+    
+class InterviewTurn(BaseModel):
+    """
+    Represents one complete interaction between the interviewer
+    and the candidate.
+    """
+
+    topic: InterviewTopic
+
+    question: InterviewQuestion
+
+    candidate_answer: str = Field(
+        default="",
+        description="Candidate's answer to the interview question."
+    )
+
+    evaluation: AnswerEvaluation | None = Field(
+        default=None,
+        description=(
+            "Evaluation of the candidate's answer. "
+            "This field remains None until the answer has been evaluated."
+        )
+    )
+
+    turn_type: Literal[
+        "initial",
+        "follow_up",
+    ] = Field(
+        default="initial",
+        description=(
+            "Indicates whether this interaction corresponds to the "
+            "initial interview question or a follow-up question."
+        )
+    )
+    
+class InterviewSession(BaseModel):
+    """
+    Represents the complete state of an interview.
+    """
+
+    interview_plan: InterviewPlan
+
+    current_topic_index: int = 0
+
+    turns: list[InterviewTurn] = Field(
+        default_factory=list
+    )
+
+    completed: bool = False
+
+class FollowUpQuestion(BaseModel):
+
+    question: str = Field(
+        description="Exactly one follow-up interview question."
+    )
+
+    assessment_goal: str = Field(
+        description=(
+            "What this follow-up question is intended to assess."
+        )
+    )
+
+    answer_checkpoints: list[str] = Field(
+        description=(
+            "Important concepts expected in a strong answer."
+        )
+    )
+
+ 
+
+class InterviewReport(BaseModel):
+
+    candidate_summary: str = Field(
+        description=(
+            "Overall summary of the candidate's interview performance."
+        )
+    )
+
+    technical_strengths: list[str] = Field(
+        description=(
+            "Technical strengths consistently demonstrated during the interview."
+        )
+    )
+
+    improvement_areas: list[str] = Field(
+        description=(
+            "Topics where the candidate should improve."
+        )
+    )
+
+    topics_discussed: list[str] = Field(
+        description=(
+            "Major interview topics that were covered."
+        )
+    )
+
+    hiring_recommendation: Literal[
+        "strong_hire",
+        "hire",
+        "lean_hire",
+        "lean_no_hire",
+        "no_hire",
+    ] = Field(
+        description="Overall hiring recommendation."
+    )
+
+    interviewer_notes: str = Field(
+        description=(
+            "Final notes summarizing the interview."
         )
     )
