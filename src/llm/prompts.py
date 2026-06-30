@@ -135,6 +135,13 @@ Decision Rules
 - next_action = "end_interview"
   only if this is explicitly indicated by the calling application.
 
+If next_action is "follow_up",
+follow_up_focus must identify the primary missing concept
+or concepts to probe next.
+
+If next_action is not "follow_up",
+set follow_up_focus to an empty string.
+
 If next_action is not "follow_up",
 set follow_up_focus to an empty string.
 
