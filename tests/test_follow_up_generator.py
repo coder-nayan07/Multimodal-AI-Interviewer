@@ -20,6 +20,7 @@ from src.questioning.question_generator import QuestionGenerator
 from src.questioning.followup_generator import FollowUpGenerator
 
 from src.interview.interview_engine import InterviewEngine
+from src.evaluation.answer_evaluator import AnswerEvaluator
 
 
 # ==========================================================
@@ -76,8 +77,6 @@ topic = engine.current_topic(
 question_generator = QuestionGenerator()
 
 question = question_generator.generate(
-    resume,
-    jd,
     topic,
 )
 
@@ -114,6 +113,18 @@ conversation = engine.topic_history(
     session
 )
 
+
+# ==========================================================
+# Evaluate Candidate Answer
+# ==========================================================
+
+evaluator = AnswerEvaluator()
+
+evaluation = evaluator.evaluate(
+    question,
+    candidate_answer,
+)
+
 # ==========================================================
 # Follow-up Question
 # ==========================================================
@@ -123,6 +134,7 @@ followup_generator = FollowUpGenerator()
 followup = followup_generator.generate(
     topic,
     conversation,
+    evaluation.follow_up_focus,
 )
 
 # ==========================================================
@@ -158,6 +170,14 @@ print("CONVERSATION HISTORY")
 print("=" * 80)
 
 print(conversation)
+
+print()
+
+print("=" * 80)
+print("ANSWER EVALUATION")
+print("=" * 80)
+
+print(evaluation.model_dump())
 
 print()
 

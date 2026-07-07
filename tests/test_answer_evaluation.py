@@ -54,8 +54,6 @@ topic = plan.topics[0]
 # ==========================================================
 
 question = QuestionGenerator().generate(
-    resume,
-    jd,
     topic,
 )
 

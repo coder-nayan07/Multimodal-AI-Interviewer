@@ -74,18 +74,22 @@ Conversation History
 
 {conversation}
 
+Focus Area
+
+{follow_up_focus}
+
 Generate exactly ONE follow-up interview question.
 
-Rules:
+Rules
 
-- Continue the conversation naturally.
-- Build directly upon the candidate's previous answer.
-- Probe deeper into implementation details, reasoning,
-  design decisions or trade-offs.
-- Ask only ONE question.
-- Do not repeat previous questions.
-- Do not change the interview topic.
+- The previous answer did not sufficiently answer the original question.
+- Redirect the conversation back to the provided Focus Area.
+- Build naturally upon the previous discussion.
+- Probe deeper into the missing concept.
+- Ask exactly ONE question.
+- Do not repeat the original question verbatim.
 - Do not introduce unrelated technologies.
+- Do not continue discussing unrelated topics mentioned by the candidate.
 
 Return the response using the provided schema.
 """
