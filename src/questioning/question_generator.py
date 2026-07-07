@@ -4,8 +4,6 @@ from src.llm.llm_client import LLMClient
 from src.llm.prompts import QUESTION_GENERATION_PROMPT
 
 from src.models.schemas import (
-    ResumeDocument,
-    JobDescriptionDocument,
     InterviewTopic,
     InterviewQuestion,
 )
@@ -31,8 +29,6 @@ class QuestionGenerator:
 
     def generate(
         self,
-        resume: ResumeDocument,
-        jd: JobDescriptionDocument,
         topic: InterviewTopic,
     ) -> InterviewQuestion:
 
@@ -40,8 +36,6 @@ class QuestionGenerator:
 
         question = chain.invoke(
             {
-                "resume": resume.to_llm_context(),
-                "job_description": jd.to_llm_context(),
                 "interview_topic": topic.model_dump_json(indent=2),
             }
         )

@@ -38,11 +38,6 @@ You are given the following information.
 Interview Topic
 {interview_topic}
 
-# Canndidate Resume
-# {resume}
-
-# Job Description
-# {job_description}
 
 Generate exactly ONE focused question.
 

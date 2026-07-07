@@ -42,8 +42,6 @@ generator = QuestionGenerator()
 topic = interview_plan.topics[0]
 
 question = generator.generate(
-    resume,
-    jd,
     topic,
 )
 

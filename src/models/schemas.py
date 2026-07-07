@@ -46,45 +46,44 @@ class ResumeDocument(BaseModel):
         text = re.sub(r"\s+", " ", text)
         return text.strip()
 
+
     def find_relevant_context(
         self,
         topic: str,
     ) -> str:
         """
-        Finds the paragraph most relevant to the supplied topic using
-        keyword overlap instead of exact string matching.
+        Returns the paragraph that best matches the interview topic.
         """
 
-        topic_tokens = set(
-            self._normalize(topic).split()
-        )
+        topic_words = {
+            word.lower()
+            for word in re.findall(r"\w+", topic)
+            if len(word) > 2
+        }
 
-        best_match = ""
-        best_score = 0
+        best_score = -1
+        best_paragraph = ""
 
-        for section_text in self.sections.values():
+        for section in self.sections.values():
 
-            paragraphs = re.split(
-                r"\n\s*\n",
-                section_text,
-            )
+            paragraphs = re.split(r"\n\s*\n", section)
 
             for paragraph in paragraphs:
 
-                paragraph_tokens = set(
-                    self._normalize(paragraph).split()
-                )
+                paragraph_words = {
+                    word.lower()
+                    for word in re.findall(r"\w+", paragraph)
+                }
 
                 score = len(
-                    topic_tokens.intersection(paragraph_tokens)
+                    topic_words & paragraph_words
                 )
 
                 if score > best_score:
-
                     best_score = score
-                    best_match = paragraph.strip()
+                    best_paragraph = paragraph.strip()
 
-        return best_match
+        return best_paragraph
 
 class JobDescriptionDocument(BaseModel):
     """Represents a parsed Job Description."""

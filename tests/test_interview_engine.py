@@ -87,8 +87,6 @@ print()
 generator = QuestionGenerator()
 
 question = generator.generate(
-    resume,
-    jd,
     topic,
 )
 
