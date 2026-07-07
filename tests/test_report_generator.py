@@ -77,8 +77,6 @@ topic = engine.current_topic(
 question_generator = QuestionGenerator()
 
 question = question_generator.generate(
-    resume,
-    jd,
     topic,
 )
 
