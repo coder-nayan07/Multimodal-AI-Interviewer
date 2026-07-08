@@ -144,6 +144,14 @@ set follow_up_focus to an empty string.
 If next_action is not "follow_up",
 set follow_up_focus to an empty string.
 
+
+If the candidate explicitly states that they do not know,
+cannot answer, or requests to move on, recommend
+
+next_action = "next_topic"
+
+unless there is a compelling reason to continue probing.
+
 Return only the structured response.
 """
 

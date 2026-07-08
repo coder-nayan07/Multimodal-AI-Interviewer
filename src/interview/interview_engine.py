@@ -1,9 +1,12 @@
+from typing import Literal
+
 from src.models.schemas import (
     InterviewPlan,
     InterviewQuestion,
     InterviewSession,
     InterviewTopic,
     InterviewTurn,
+    AnswerEvaluation,
 )
 
 
@@ -15,35 +18,9 @@ class InterviewEngine:
     no LLM calls.
     """
 
-    def topic_history(
-        self,
-        session: InterviewSession,
-    ) -> str:
-        """
-        Returns the conversation history for the
-        current interview topic.
-        """
-
-        current_topic = self.current_topic(session)
-
-        history = []
-
-        for turn in session.turns:
-
-            if turn.topic.topic != current_topic.topic:
-                continue
-
-            history.append(
-                f"Question:\n{turn.question.question}"
-            )
-
-            if turn.candidate_answer:
-
-                history.append(
-                    f"Candidate:\n{turn.candidate_answer}"
-                )
-
-        return "\n\n".join(history)
+    # ======================================================
+    # Session Management
+    # ======================================================
 
     def start(
         self,
@@ -53,9 +30,28 @@ class InterviewEngine:
         Creates a fresh interview session.
         """
 
+        if not interview_plan.topics:
+            raise ValueError(
+                "Interview plan contains no topics."
+            )
+
         return InterviewSession(
             interview_plan=interview_plan,
         )
+
+    def is_finished(
+        self,
+        session: InterviewSession,
+    ) -> bool:
+        """
+        Returns True if the interview is complete.
+        """
+
+        return session.completed
+
+    # ======================================================
+    # Topic Management
+    # ======================================================
 
     def current_topic(
         self,
@@ -65,22 +61,55 @@ class InterviewEngine:
         Returns the current interview topic.
         """
 
+        if session.completed:
+            raise RuntimeError(
+                "Interview has already completed."
+            )
+
         return session.interview_plan.topics[
             session.current_topic_index
         ]
+
+    def advance(
+        self,
+        session: InterviewSession,
+    ) -> None:
+        """
+        Advances the interview to the next topic.
+        """
+
+        if session.completed:
+            return
+
+        session.current_topic_index += 1
+
+        if (
+            session.current_topic_index
+            >= len(session.interview_plan.topics)
+        ):
+            session.completed = True
+
+    # ======================================================
+    # Turn Management
+    # ======================================================
 
     def add_turn(
         self,
         session: InterviewSession,
         question: InterviewQuestion,
+        turn_type: Literal[
+            "initial",
+            "follow_up",
+        ] = "initial",
     ) -> InterviewTurn:
         """
-        Records a newly generated interview question.
+        Creates a new interview turn.
         """
 
         turn = InterviewTurn(
             topic=self.current_topic(session),
             question=question,
+            turn_type=turn_type,
         )
 
         session.turns.append(turn)
@@ -106,8 +135,7 @@ class InterviewEngine:
         answer: str,
     ) -> None:
         """
-        Stores the candidate's answer for the
-        current interview turn.
+        Stores the candidate's answer.
         """
 
         turn = self.current_turn(session)
@@ -119,27 +147,54 @@ class InterviewEngine:
 
         turn.candidate_answer = answer
 
-    def advance(
+    def record_evaluation(
         self,
         session: InterviewSession,
+        evaluation: AnswerEvaluation,
     ) -> None:
         """
-        Advances the interview to the next topic.
+        Stores the evaluation for the current turn.
         """
 
-        session.current_topic_index += 1
+        turn = self.current_turn(session)
 
-        if session.current_topic_index >= len(
-            session.interview_plan.topics
-        ):
-            session.completed = True
+        if turn is None:
+            raise RuntimeError(
+                "Cannot evaluate before asking a question."
+            )
 
-    def is_finished(
+        turn.evaluation = evaluation
+
+    # ======================================================
+    # Conversation History
+    # ======================================================
+
+    def topic_history(
         self,
         session: InterviewSession,
-    ) -> bool:
+    ) -> str:
         """
-        Returns True if the interview is complete.
+        Returns the conversation history for the
+        current interview topic.
         """
 
-        return session.completed
+        topic = self.current_topic(session)
+
+        history = []
+
+        for turn in session.turns:
+
+            if turn.topic.topic != topic.topic:
+                continue
+
+            history.append(
+                f"Question:\n{turn.question.question}"
+            )
+
+            if turn.candidate_answer:
+
+                history.append(
+                    f"Candidate:\n{turn.candidate_answer}"
+                )
+
+        return "\n\n".join(history)
