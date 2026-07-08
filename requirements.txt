@@ -1,11 +1,18 @@
-langgraph
+# --- Core LLM & Orchestration ---
 langchain-groq
-langchain-community
-llama-parse
+langchain-core
 pydantic
 python-dotenv
-instructor
+
+# --- Document Parsing ---
+pymupdf
+
+# --- Voice & Speech (New Features) ---
+edge-tts
+SpeechRecognition
+pyaudio
+pygame
+
+# --- Web Interface ---
 fastapi
 uvicorn
-ritz
-frontend
